@@ -1,0 +1,48 @@
+name: order-system
+
+services:
+  order-api:
+    build:
+      context: .
+      dockerfile: Dockerfile-php
+    container_name: order-api
+    depends_on:
+      - order-pgsql
+    ports:
+      - "8020:80"
+    mem_limit: 256M
+    cpus: 0.5
+    volumes:
+      - ./../../api:/var/www/html
+      - ./../../config/apache-local.conf:/etc/apache2/sites-available/order-api.conf
+      - ./php-service-startup.sh:/php-service-startup.sh
+    command: ["bash", "/php-service-startup.sh"]
+
+  order-pgsql:
+    image: postgres:15
+    container_name: order-pgsql
+    environment:
+      - "POSTGRES_USER=postgres"
+      - "POSTGRES_PASSWORD=postgres"
+      - "POSTGRES_DB=order-system"
+    ports:
+      - "5442:5432"
+    mem_limit: 256M
+    cpus: 0.5
+    volumes:
+      - ./../../local-dev/pgdata:/var/lib/postgresql/data
+    command: ["postgres", "-c", "listen_addresses=0.0.0.0"]
+
+  order-testing-pgsql:
+    image: postgres:15
+    container_name: order-testing-pgsql
+    environment:
+      - "POSTGRES_USER=postgres"
+      - "POSTGRES_PASSWORD=postgres"
+    ports:
+      - "5443:5432"
+    mem_limit: 256M
+    cpus: 0.5
+    volumes:
+      - ./../../local-dev/pgdata_testing:/var/lib/postgresql/data
+    command: ["postgres", "-c", "listen_addresses=0.0.0.0"]
