@@ -1,66 +1,47 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 其餘題目
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## 題目一
 
-## About Laravel
+Q1. 請寫出一條 SQL，列出在 2023/5 下訂的訂單，使用台幣付款，且 5 月總金額最多的前十筆的旅宿 ID（bnb_id）、旅宿名稱（bnb_name）及 5 月總金額（may_amount）
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+```
+SELECT bnbs.id AS bub_id, bnbs.name AS bnb_name, SUM(orders.amount) AS may_amount
+FROM orders
+LEFT JOIN bnbs ON bnbs.id = orders.bnb_id
+WHERE orders.created_at >= '2024-05-01' AND orders.created_at <= '2024-05-31' AND orders.currency = 'TWD'
+GROUP BY bnbs.id, bnbs.name
+ORDER BY SUM(orders.amount) DESC
+LIMIT 10
+```
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Q2. 在 Q1 的執行下，發現 SQL 執行速度很慢，會怎麼去優化？
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+1. 增加 index
+    1. orders: bnb_id+created_at+currrency
+    1. bnbs: id+name
+1. 如果接受不是最即時的資料（例如前一日報表使用）的話
+    1. 新增一張給報表使用的表 orders_analysis，欄位有 bnb_id, bnb_name, year, month, monthly_total_amount
+    1. 每增加一筆訂單後，將該訂單丟進 job queue，用該訂單的 amount 與 created_at 排隊更新 orders_analysis.monthly_total_amount，必要的話更新後同步更新 cache
 
-## Learning Laravel
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Q1 還有一種是 subquery+inner join
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+```
+SELECT bnbs.id, bnbs.name, rank.total_amount AS may_amount
+FROM bnbs
+INNER JOIN (
+    SELECT orders.bnb_id, SUM(orders.amount) AS total_amount
+    FROM orders
+    WHERE orders.created_at >= '2024-05-01' AND orders.created_at <= '2024-05-31' AND orders.currency = 'TWD'
+    GROUP BY orders.bnb_id
+    ORDER BY total_amount DESC
+    LIMIT 10
+) AS rank ON rank.bnb_id = bnbs.id
+ORDER BY may_amount DESC;
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+order 打上一樣的 index，bnbs 打上 id。兩種的話 explain 後是 inner join 比較好。
 
-## Laravel Sponsors
+## 題目二（API）
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
-
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+SOLID 的部分看來使用了 Open-closed priciple 而已。設計模式沒特別設計。
