@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CreateOrderRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
@@ -69,13 +69,14 @@ class OrderController extends Controller
      *  ),
      * )
      *
-     * @param Request $request
+     * @param CreateOrderRequest $request
      * @return JsonResponse
      */
-    public function createAction(Request $request): JsonResponse
+    public function createAction(CreateOrderRequest $request): JsonResponse
     {
-        // TODO
+        $validated = $request->validated();
 
+        // TODO
         return response()->json([]);
     }
 }
