@@ -69,6 +69,7 @@ serve-restart:
 clear-local-dev:
 	@echo "Regenerate folder $(FOLDER_LOCAL_DEV)..."
 	@if [[ -d "$(FOLDER_LOCAL_DEV)" ]]; then \
+		rm -rf $(FOLDER_LOCAL_DEV)/*; \
 		rmdir $(FOLDER_LOCAL_DEV); \
 	fi
 	mkdir $(FOLDER_LOCAL_DEV)
