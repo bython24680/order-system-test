@@ -52,6 +52,7 @@ serve-stop:
 serve-remove:
 	@echo "\033[0;33mRemove local services...\033[0m\n"
 	sudo docker compose -f $(DOCKER_COMPOSE) rm
+	@echo "Containers has been destroyed but save data are still exist. Please run 'make clear-local-dev' to remove save data."
 
 serve-logs:
 	sudo docker compose -f $(DOCKER_COMPOSE) logs
@@ -69,6 +70,7 @@ serve-restart:
 clear-local-dev:
 	@echo "Regenerate folder $(FOLDER_LOCAL_DEV)..."
 	@if [[ -d "$(FOLDER_LOCAL_DEV)" ]]; then \
+		rm -rf $(FOLDER_LOCAL_DEV)/*; \
 		rmdir $(FOLDER_LOCAL_DEV); \
 	fi
 	mkdir $(FOLDER_LOCAL_DEV)
