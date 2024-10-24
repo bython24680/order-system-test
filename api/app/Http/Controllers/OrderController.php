@@ -2,11 +2,27 @@
 
 namespace App\Http\Controllers;
 
+use App\Formatters\OrderFormatter;
 use App\Http\Requests\CreateOrderRequest;
+use App\Services\OrderService;
+use App\Supports\ResponseSupport;
+use Exception;
 use Illuminate\Http\JsonResponse;
+use InvalidArgumentException;
 
 class OrderController extends Controller
 {
+    private $OrderService;
+    private $OrderFormatter;
+
+    public function __construct(
+        OrderService $OrderService,
+        OrderFormatter $OrderFormatter,
+    ) {
+        $this->OrderService = $OrderService;
+        $this->OrderFormatter = $OrderFormatter;
+    }
+
     /**
      * @OA\Post(
      *  path="/api/orders",
@@ -74,9 +90,30 @@ class OrderController extends Controller
      */
     public function createAction(CreateOrderRequest $request): JsonResponse
     {
-        $validated = $request->validated();
+        $return_message = 'Create an order';
 
-        // TODO
-        return response()->json([]);
+        $parameters = $request->validated();
+
+        // Validate and transfer validated parameters
+        try {
+            $parameters = $this->OrderService->validateAndTransferParameters($parameters);
+        } catch (InvalidArgumentException $e) {
+            return $this->getJsonErrorResponse(
+                ResponseSupport::getResponseMessage($return_message, false, $e->getMessage()),
+                $e->getCode(),
+            );
+        } catch (Exception $e) {
+            return $this->getJsonErrorResponse(
+                ResponseSupport::getResponseMessage($return_message, false, $e->getMessage()),
+                $e->getCode(),
+                true,
+            );
+        }
+
+        // TODO: Insert into database
+        return $this->getJsonSuccessResponse(
+            ResponseSupport::getResponseMessage($return_message),
+            $this->OrderFormatter->formatTransferedParameters($parameters),
+        );
     }
 }

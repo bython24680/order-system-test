@@ -72,6 +72,83 @@ class CreateOrderTest extends TestCase
             ]);
     }
 
+    public static function paramErrorFormatProvider(): array
+    {
+        return [
+            [
+                [
+                    'id' => 'A0000001',
+                    'name' => 'Melodía Holiday Inn',
+                    'address' => [
+                        'city' => 'taipei-city',
+                        'district' => 'da-an-district',
+                        'street' => 'fuxing-south-road',
+                    ],
+                    'price' => '1000',
+                    'currency' => 'TWD',
+                ],
+                'Name contains non-English characters',
+            ],
+            [
+                [
+                    'id' => 'A0000001',
+                    'name' => 'Melody holiday Inn',
+                    'address' => [
+                        'city' => 'taipei-city',
+                        'district' => 'da-an-district',
+                        'street' => 'fuxing-south-road',
+                    ],
+                    'price' => '1000',
+                    'currency' => 'TWD',
+                ],
+                'Name is not capitalized',
+            ],
+            [
+                [
+                    'id' => 'A0000001',
+                    'name' => 'Melody Holiday Inn',
+                    'address' => [
+                        'city' => 'taipei-city',
+                        'district' => 'da-an-district',
+                        'street' => 'fuxing-south-road',
+                    ],
+                    'price' => '2050',
+                    'currency' => 'TWD',
+                ],
+                'Price is over 2000',
+            ],
+            [
+                [
+                    'id' => 'A0000001',
+                    'name' => 'Melody Holiday Inn',
+                    'address' => [
+                        'city' => 'taipei-city',
+                        'district' => 'da-an-district',
+                        'street' => 'fuxing-south-road',
+                    ],
+                    'price' => '1000',
+                    'currency' => 'JPY',
+                ],
+                'Currency format is wrong',
+            ],
+        ];
+    }
+
+    #[DataProvider('paramErrorFormatProvider')]
+    public function testErrorOfFormatValidAndTransfer(array $parameters, string $expect_message): void
+    {
+        $response = $this->withHeaders(
+            $this->getHeaders(),
+        )->post(self::ENDPOINT, $parameters);
+
+        $response->assertStatus(400)
+            ->assertExactJson([
+                'status' => 'error',
+                'message' => 'Create an order failed. ' . $expect_message,
+                'data' => [],
+            ]);
+    }
+
     public function testDuplicatedOrderId(): void
     {
         // TODO
@@ -82,8 +159,96 @@ class CreateOrderTest extends TestCase
         // TODO
     }
 
-    public function testSuccess(): void
+    public static function successProvider(): array
     {
-        // TODO
+        return [
+            [
+                [
+                    'id' => 'A0000001',
+                    'name' => 'Melody Holiday Inn',
+                    'address' => [
+                        'city' => 'taipei-city',
+                        'district' => 'da-an-district',
+                        'street' => 'fuxing-south-road',
+                    ],
+                    'price' => '1000',
+                    'currency' => 'TWD',
+                ],
+                [
+                    'id' => 'A0000001',
+                    'name' => 'Melody Holiday Inn',
+                    'address' => [
+                        'city' => 'taipei-city',
+                        'district' => 'da-an-district',
+                        'street' => 'fuxing-south-road',
+                    ],
+                    'price' => '1000',
+                    'currency' => 'TWD',
+                ],
+            ],
+            [
+                [
+                    'id' => 'A0000001',
+                    'name' => 'Melody Holiday Inn',
+                    'address' => [
+                        'city' => 'taipei-city',
+                        'district' => 'da-an-district',
+                        'street' => 'fuxing-south-road',
+                    ],
+                    'price' => '1000',
+                    'currency' => 'USD',
+                ],
+                [
+                    'id' => 'A0000001',
+                    'name' => 'Melody Holiday Inn',
+                    'address' => [
+                        'city' => 'taipei-city',
+                        'district' => 'da-an-district',
+                        'street' => 'fuxing-south-road',
+                    ],
+                    'price' => '31000',
+                    'currency' => 'TWD',
+                ],
+            ],
+            [
+                [
+                    'id' => 'A0000001',
+                    'name' => 'Melody Holiday Inn',
+                    'address' => [
+                        'city' => 'taipei-city',
+                        'district' => 'da-an-district',
+                        'street' => 'fuxing-south-road',
+                    ],
+                    'price' => '500',
+                    'currency' => 'twd',
+                ],
+                [
+                    'id' => 'A0000001',
+                    'name' => 'Melody Holiday Inn',
+                    'address' => [
+                        'city' => 'taipei-city',
+                        'district' => 'da-an-district',
+                        'street' => 'fuxing-south-road',
+                    ],
+                    'price' => '500',
+                    'currency' => 'TWD',
+                ],
+            ],
+        ];
+    }
+
+    #[DataProvider('successProvider')]
+    public function testSuccess(array $parameters, array $expect_data): void
+    {
+        $response = $this->withHeaders(
+            $this->getHeaders(),
+        )->post(self::ENDPOINT, $parameters);
+
+        $response->assertStatus(200)
+            ->assertExactJson([
+                'status' => 'success',
+                'message' => 'Create an order successfully',
+                'data' => $expect_data,
+            ]);
     }
 }
