@@ -104,7 +104,7 @@ class OrderController extends Controller
             );
         } catch (Exception $e) {
             return $this->getJsonErrorResponse(
-                ResponseSupport::getResponseMessage($return_message, false, $e->getMessage()),
+                ResponseSupport::getResponseMessage($return_message, false, 'There has some issue when validate and transfer parameters'),
                 $e->getCode(),
                 true,
             );
